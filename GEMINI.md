@@ -1,10 +1,10 @@
-# Project Memory & Agent Guidelines: Helper AI
+# Antigravity Agent Guidelines & Project Memory: Helper AI
 
-This document serves as the persistent project memory and rulebook for the **Helper AI** ticket management system. These instructions must be actively referenced and applied to every prompt, turn, and code change.
+This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memory and rulebook for the **Helper AI** ticket management system in Google Antigravity. These instructions must be actively referenced and strictly applied to every prompt, turn, and code change.
 
 ---
 
-## 1. Documentation & Library Research Rule (Context7 MCP)
+## 1. Documentation & Research Rule (Context7 MCP)
 
 > **MANDATORY**: For every user request or coding task involving external libraries, APIs, SDKs, or tools (including React, Tailwind CSS, Express, Vite, Prisma, Google GenAI SDK, SendGrid, Mailgun, Docker, etc.), you **MUST ALWAYS** use the `context7` MCP server to fetch current, up-to-date documentation and code examples before writing or refactoring code.
 
@@ -18,7 +18,7 @@ This document serves as the persistent project memory and rulebook for the **Hel
    }
    ```
 2. **Query Documentation**:
-   Call `call_mcp_tool` with `ServerName: "context7"` and `ToolName: "query-docs"` using the resolved ID (e.g., `/tailwindlabs/tailwindcss`):
+   Call `call_mcp_tool` with `ServerName: "context7"` and `ToolName: "query-docs"` using the resolved ID (e.g., `/tailwindlabs/tailwindcss.com`):
    ```json
    {
      "libraryId": "<Resolved Library ID>",
@@ -26,11 +26,20 @@ This document serves as the persistent project memory and rulebook for the **Hel
      "language": "TypeScript"
    }
    ```
-3. Never guess API signatures or use deprecated configurations when context7 is available.
+3. Never guess API signatures or use deprecated configurations when Context7 is available.
 
 ---
 
-## 2. Core Project Architecture
+## 2. Strict Port & Networking Rules
+
+- **Frontend Port**: `3000` (Strictly configured in Vite).
+- **Backend Port**: `3001` (Default Express listen port; CORS origin allowed from `http://localhost:3000`).
+- **REST Proxy**: Frontend Vite server proxies `/api` requests to `http://localhost:3001`.
+- **FORBIDDEN PORTS**: **NEVER** bind or suggest ports `5173`, `5473`, `73`, `8000`, or `8080`, as they conflict with other running user services.
+
+---
+
+## 3. Core Project Architecture
 
 - **Project Purpose**: AI-powered support ticket management and autonomous triage system.
 - **Frontend (`/client`)**:
@@ -50,15 +59,6 @@ This document serves as the persistent project memory and rulebook for the **Hel
   - SendGrid or Mailgun inbound parse webhook (`POST /api/webhooks/email`) + transactional outbound delivery.
 - **Containerization**:
   - Multi-container Docker & Docker Compose (`postgres` with `pgvector`, backend API, and frontend).
-
----
-
-## 3. Strict Port & Networking Rules
-
-- **Frontend Port**: `3000` (strict port configured in Vite).
-- **Backend Port**: `3001` (default Express listen port, CORS allowed from `http://localhost:3000`).
-- **REST Proxy**: Frontend Vite server proxies `/api` requests to `http://localhost:3001`.
-- **FORBIDDEN PORTS**: **NEVER** bind or suggest ports `5173`, `5473`, `73`, `8000`, or `8080`, as they conflict with other running user services.
 
 ---
 

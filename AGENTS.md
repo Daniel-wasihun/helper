@@ -1,14 +1,14 @@
 # Antigravity Agent Guidelines & Project Memory: Helper AI
 
-This document (`AGENT.md`) serves as the persistent project memory and instruction set for the Antigravity agent, analogous to `CLAUDE.md` in Claude Code. It must be actively referenced and strictly followed across all turns and coding tasks.
+This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memory and rulebook for the **Helper AI** ticket management system in Google Antigravity. These instructions must be actively referenced and strictly applied to every prompt, turn, and code change.
 
 ---
 
-## 1. Documentation & Research Protocol (Context7 MCP)
+## 1. Documentation & Research Rule (Context7 MCP)
 
-> **MANDATORY**: For every request involving third-party libraries, frameworks, APIs, or tools (React, Tailwind CSS, Express, Vite, Prisma, Google GenAI SDK, SendGrid, Mailgun, Docker, etc.), you **MUST ALWAYS** use the `context7` MCP server to fetch current, up-to-date documentation and code examples before writing or refactoring code.
+> **MANDATORY**: For every user request or coding task involving external libraries, APIs, SDKs, or tools (including React, Tailwind CSS, Express, Vite, Prisma, Google GenAI SDK, SendGrid, Mailgun, Docker, etc.), you **MUST ALWAYS** use the `context7` MCP server to fetch current, up-to-date documentation and code examples before writing or refactoring code.
 
-### Protocol for Context7:
+### Protocol for Querying Context7:
 1. **Resolve Library ID**:
    Call `call_mcp_tool` with `ServerName: "context7"` and `ToolName: "resolve-library-id"`:
    ```json
@@ -33,15 +33,15 @@ This document (`AGENT.md`) serves as the persistent project memory and instructi
 ## 2. Strict Port & Networking Rules
 
 - **Frontend Port**: `3000` (Strictly configured in Vite).
-- **Backend Port**: `3001` (Express listen port; CORS origin allowed from `http://localhost:3000`).
-- **Vite Proxy**: Frontend Vite server proxies `/api` requests to `http://localhost:3001`.
-- **FORBIDDEN PORTS**: **NEVER** bind or suggest ports `5173`, `5473`, `73`, `8000`, or `8080`, as they conflict with other user services.
+- **Backend Port**: `3001` (Default Express listen port; CORS origin allowed from `http://localhost:3000`).
+- **REST Proxy**: Frontend Vite server proxies `/api` requests to `http://localhost:3001`.
+- **FORBIDDEN PORTS**: **NEVER** bind or suggest ports `5173`, `5473`, `73`, `8000`, or `8080`, as they conflict with other running user services.
 
 ---
 
 ## 3. Core Project Architecture
 
-- **Project**: Helper AI — Support Ticket Management & Autonomous Triage System.
+- **Project Purpose**: AI-powered support ticket management and autonomous triage system.
 - **Frontend (`/client`)**:
   - React 18 with TypeScript and Vite 6.
   - React Router v6.
