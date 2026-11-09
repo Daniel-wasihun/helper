@@ -9,10 +9,17 @@
   "scripts": {
     "dev": "node --experimental-strip-types --watch src/index.ts",
     "start": "node --experimental-strip-types src/index.ts",
-    "bun:dev": "bun --watch src/index.ts"
+    "bun:dev": "bun --watch src/index.ts",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "cors": "^2.8.5",
+    "dotenv": "^18.0.10",
     "express": "^4.21.2"
   },
   "devDependencies": {
@@ -20,6 +27,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.1",
+    "prisma": "^7.10.1",
     "typescript": "^5.7.2"
   }
 }

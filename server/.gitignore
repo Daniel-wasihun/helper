@@ -1,0 +1,21 @@
+# Dependencies
+node_modules
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build / runtime
+dist
+*.log
+
+# Prisma
+dev.db
+dev.db-journal
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
