@@ -2,13 +2,20 @@ import "dotenv/config";
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./auth.ts";
 import prisma from "./lib/prisma.ts";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// CORS
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000", credentials: true }));
+
+// Better Auth route handler (mounted before express.json() to prevent request stream consumption)
+app.all("/api/auth/*", toNodeHandler(auth));
+
+// Body parser middleware
 app.use(express.json());
 
 // Routes
