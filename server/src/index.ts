@@ -4,7 +4,9 @@ import type { Request, Response } from "express";
 import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.ts";
+import { requireAuth } from "./middleware/auth.ts";
 import prisma from "./lib/prisma.ts";
+import type { AuthenticatedRequest } from "./types/auth.ts";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,7 +20,25 @@ app.all("/api/auth/*", toNodeHandler(auth));
 // Body parser middleware
 app.use(express.json());
 
-// Routes
+// Protected "me" endpoint
+app.get("/api/me", requireAuth, (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest;
+  res.json({
+    user: authReq.user,
+    session: authReq.session,
+  });
+});
+
+// Alias for /api/auth/me
+app.get("/api/auth/me", requireAuth, (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest;
+  res.json({
+    user: authReq.user,
+    session: authReq.session,
+  });
+});
+
+// Health route
 app.get("/api/health", async (_req: Request, res: Response) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
