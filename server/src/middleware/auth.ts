@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../auth.ts";
-import type { UserRole } from "../types/auth.ts";
+import { UserRole } from "../types/auth.ts";
 import "../types/auth.ts";
 
 export async function requireAuth(
@@ -45,7 +45,9 @@ export function requireRole(allowedRoles: UserRole | UserRole[]) {
       return;
     }
 
-    const userRole = ((req.user.role ?? "agent") as UserRole) || "agent";
+    const rawRole = req.user.role;
+    const normalizedRole = typeof rawRole === "string" ? rawRole.toUpperCase() : UserRole.AGENT;
+    const userRole = (normalizedRole as UserRole) || UserRole.AGENT;
 
     if (!roles.includes(userRole)) {
       res.status(403).json({

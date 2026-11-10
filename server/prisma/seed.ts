@@ -2,6 +2,7 @@ import "dotenv/config";
 import crypto from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import prisma from "../src/lib/prisma.ts";
+import { UserRole } from "../src/types/auth.ts";
 
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
@@ -19,12 +20,12 @@ async function main() {
   });
 
   if (existingUser) {
-    console.log(`User ${adminEmail} already exists. Updating role to 'admin' and refreshing password...`);
+    console.log(`User ${adminEmail} already exists. Updating role to ${UserRole.ADMIN} and refreshing password...`);
 
     await prisma.user.update({
       where: { id: existingUser.id },
       data: {
-        role: "admin",
+        role: UserRole.ADMIN,
         name: adminName,
         emailVerified: true,
       },
@@ -68,7 +69,7 @@ async function main() {
       id: userId,
       email: adminEmail,
       name: adminName,
-      role: "admin",
+      role: UserRole.ADMIN,
       emailVerified: true,
       createdAt: now,
       updatedAt: now,
@@ -85,7 +86,7 @@ async function main() {
     },
   });
 
-  console.log(`✓ Admin user ${adminEmail} created successfully with role 'admin'!`);
+  console.log(`✓ Admin user ${adminEmail} created successfully with role ${UserRole.ADMIN}!`);
 }
 
 main()

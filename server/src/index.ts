@@ -8,7 +8,8 @@ import { hashPassword } from "better-auth/crypto";
 import { auth } from "./auth.ts";
 import { requireAuth, requireRole } from "./middleware/auth.ts";
 import prisma from "./lib/prisma.ts";
-import type { AuthenticatedRequest, UserRole } from "./types/auth.ts";
+import { UserRole } from "./types/auth.ts";
+import type { AuthenticatedRequest } from "./types/auth.ts";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,7 +42,7 @@ app.get("/api/auth/me", requireAuth, (req: Request, res: Response) => {
 });
 
 // Admin-only protected route
-app.get("/api/admin", requireAuth, requireRole("admin"), (req: Request, res: Response) => {
+app.get("/api/admin", requireAuth, requireRole(UserRole.ADMIN), (req: Request, res: Response) => {
   const authReq = req as AuthenticatedRequest;
   res.json({
     message: "Admin access granted",
@@ -50,9 +51,9 @@ app.get("/api/admin", requireAuth, requireRole("admin"), (req: Request, res: Res
 });
 
 // Admin endpoint: Create new user (e.g. Agent or Admin)
-app.post("/api/admin/users", requireAuth, requireRole("admin"), async (req: Request, res: Response): Promise<void> => {
+app.post("/api/admin/users", requireAuth, requireRole(UserRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, name, role = "agent" } = req.body;
+    const { email, password, name, role = UserRole.AGENT } = req.body;
 
     if (!email || !password || !name) {
       res.status(400).json({
@@ -62,7 +63,8 @@ app.post("/api/admin/users", requireAuth, requireRole("admin"), async (req: Requ
       return;
     }
 
-    const assignedRole: UserRole = role === "admin" ? "admin" : "agent";
+    const normalizedRole = typeof role === "string" ? role.toUpperCase() : "";
+    const assignedRole: UserRole = normalizedRole === UserRole.ADMIN ? UserRole.ADMIN : UserRole.AGENT;
 
     // Check if user with same email already exists
     const existingUser = await prisma.user.findUnique({

@@ -1,7 +1,8 @@
 import type { Request } from "express";
+import { UserRole } from "@prisma/client";
 import type { auth } from "../auth.ts";
 
-export type UserRole = "admin" | "agent";
+export { UserRole };
 
 export type AuthUser = typeof auth.$Infer.Session.user & {
   role?: UserRole | string | null;

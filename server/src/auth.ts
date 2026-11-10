@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { UserRole } from "@prisma/client";
 import prisma from "./lib/prisma.ts";
 
 export const auth = betterAuth({
@@ -16,7 +17,7 @@ export const auth = betterAuth({
       role: {
         type: "string",
         required: false,
-        defaultValue: "agent",
+        defaultValue: UserRole.AGENT,
         input: false,
       },
     },
