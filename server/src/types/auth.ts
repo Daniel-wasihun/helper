@@ -1,7 +1,11 @@
 import type { Request } from "express";
 import type { auth } from "../auth.ts";
 
-export type AuthUser = typeof auth.$Infer.Session.user;
+export type UserRole = "admin" | "agent";
+
+export type AuthUser = typeof auth.$Infer.Session.user & {
+  role?: UserRole | string | null;
+};
 export type AuthSession = typeof auth.$Infer.Session.session;
 
 declare global {

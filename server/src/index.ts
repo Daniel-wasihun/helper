@@ -4,7 +4,7 @@ import type { Request, Response } from "express";
 import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.ts";
-import { requireAuth } from "./middleware/auth.ts";
+import { requireAuth, requireRole } from "./middleware/auth.ts";
 import prisma from "./lib/prisma.ts";
 import type { AuthenticatedRequest } from "./types/auth.ts";
 
@@ -35,6 +35,15 @@ app.get("/api/auth/me", requireAuth, (req: Request, res: Response) => {
   res.json({
     user: authReq.user,
     session: authReq.session,
+  });
+});
+
+// Admin-only protected route
+app.get("/api/admin", requireAuth, requireRole("admin"), (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest;
+  res.json({
+    message: "Admin access granted",
+    user: authReq.user,
   });
 });
 
