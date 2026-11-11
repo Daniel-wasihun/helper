@@ -1,8 +1,23 @@
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { useNavigate, useLocation, Link } from "react-router";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Bot, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft, KeyRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(6, "Password must be at least 6 characters"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LocationState {
   from?: {
@@ -15,38 +30,34 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setErrorMessage("Please enter your email address.");
-      return;
-    }
-
-    if (!password) {
-      setErrorMessage("Please enter your password.");
-      return;
-    }
-
-    setIsSubmitting(true);
+  const onSubmit = async (data: LoginFormData) => {
+    setServerError(null);
 
     try {
       const response = await signIn({
-        email: trimmedEmail,
-        password,
+        email: data.email.trim(),
+        password: data.password,
       });
 
       if (response.error) {
-        setErrorMessage(response.error.message || "Invalid email or password. Please try again.");
-        setIsSubmitting(false);
+        setServerError(response.error.message || "Invalid email or password. Please try again.");
         return;
       }
 
@@ -57,15 +68,15 @@ export default function LoginPage() {
       navigate(destination, { replace: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to sign in. Please check your connection.";
-      setErrorMessage(message);
-      setIsSubmitting(false);
+      setServerError(message);
     }
   };
 
   const handleFillDemoAdmin = () => {
-    setEmail("admin@example.com");
-    setPassword("password123");
-    setErrorMessage(null);
+    setValue("email", "admin@example.com", { shouldValidate: true });
+    setValue("password", "password123", { shouldValidate: true });
+    clearErrors();
+    setServerError(null);
   };
 
   return (
@@ -84,7 +95,7 @@ export default function LoginPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md px-4">
         {/* Header */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl text-white shadow-sm mb-3">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl text-white shadow-xs mb-3">
             <Bot className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">Sign in to Helper AI</h2>
@@ -94,19 +105,19 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="mt-8 bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-2xl sm:px-10">
-          {/* Error Banner */}
-          {errorMessage && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-sm animate-fade-in">
+        <div className="mt-8 bg-white py-8 px-6 shadow-xs border border-slate-200 rounded-2xl sm:px-10">
+          {/* Server Error Banner */}
+          {serverError && (
+            <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-sm">
               <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-semibold text-rose-900">Sign In Failed</p>
-                <p className="mt-0.5 text-xs text-rose-700">{errorMessage}</p>
+                <p className="mt-0.5 text-xs text-rose-700">{serverError}</p>
               </div>
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
             <div>
               <label htmlFor="email" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                 Email address
@@ -117,16 +128,23 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="email"
-                  name="email"
                   type="email"
                   autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@example.com"
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  {...register("email")}
+                  className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition ${
+                    errors.email
+                      ? "border-rose-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20"
+                      : "border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  }`}
                 />
               </div>
+              {errors.email && (
+                <p className="mt-1.5 text-xs text-rose-600 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             <div>
@@ -139,14 +157,15 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="block w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  {...register("password")}
+                  className={`block w-full pl-10 pr-10 py-2.5 border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition ${
+                    errors.password
+                      ? "border-rose-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20"
+                      : "border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  }`}
                 />
                 <button
                   type="button"
@@ -157,6 +176,12 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="mt-1.5 text-xs text-rose-600 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <div>
