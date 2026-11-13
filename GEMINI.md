@@ -44,14 +44,27 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
 - **Project Purpose**: AI-powered support ticket management and autonomous triage system.
 - **Frontend (`/client`)**:
   - React 18 with TypeScript and Vite 6.
-  - React Router v6.
+  - React Router v7.
   - Tailwind CSS v4 using `@tailwindcss/vite` (CSS-first `@import "tailwindcss";`, no legacy `tailwind.config.js`).
+  - shadcn/ui (`radix-nova` style with `neutral` base color, `@` path aliases configured in `tsconfig.json` without deprecated `baseUrl`).
   - TanStack Query (React Query) for server state caching.
   - Lucide React for UI iconography.
 - **Backend (`/server`)**:
   - Node.js (v24 LTS) / Bun runtime with Express 4 and TypeScript.
   - Prisma ORM managing PostgreSQL with `pgvector` extension.
-  - Database sessions (`express-session` + `connect-pg-simple`) with secure HTTP-only cookies.
+  - Authentication via **Better Auth** with `@prisma/client` PostgreSQL adapter.
+- **Authentication & Authorization Architecture**:
+  - **Framework**: [Better Auth](https://better-auth.com) (`better-auth` v1.x) with TypeScript.
+  - **Server Setup (`/server/src/auth.ts`)**:
+    - `prismaAdapter(prisma, { provider: "postgresql" })`.
+    - Email/password authentication (`emailAndPassword: { enabled: true, disableSignUp: true }`) to restrict self-registration; users/agents are provisioned administratively.
+    - User schema extended with `role` field (`ADMIN` | `AGENT`), defaulting to `AGENT`.
+    - Handled in Express via `toNodeHandler(auth)` mounted at `/api/auth/*` **before** `express.json()` to avoid consuming request streams.
+    - Role-based authorization middlewares (`requireAuth`, `requireRole`) in `server/src/middleware/auth.ts`.
+  - **Client Setup (`/client/src/lib/auth-client.ts`, `/client/src/context/AuthContext.tsx`)**:
+    - `createAuthClient` from `better-auth/react`.
+    - Global `AuthProvider` providing `user`, `isLoading`, `signIn`, `signOut`, and `refetchSession`.
+    - Protected routes enforce authenticated sessions before displaying dashboards.
 - **AI & RAG Engine**:
   - Google Gemini Pro (`@google/genai`) for ticket classification, conversation summarization, and suggested replies.
   - Google `text-embedding-004` for vectorizing knowledge base articles.
@@ -70,4 +83,8 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
    - Use `import type` for type-only imports to preserve runtime cleanliness.
 3. **No Unused Variables/Imports**: Do not leave unused imports or variables (enforced by `noUnusedLocals`).
 4. **Tailwind v4 Conventions**: Configure styling directly in CSS using `@theme` or utility classes; avoid obsolete PostCSS plugins.
-5. **Clean Git Hygiene**: Maintain clean working trees with descriptive commit messages following Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`).
+5. **UI & Component Guidelines**:
+   - Use shadcn/ui components (`@/components/ui/*`) for interface primitives (Card, Button, Input, Label, Alert, etc.).
+   - Standardize utility functions in `@/lib/utils.ts` with the `cn(...)` helper.
+   - Maintain alias `@/*` pointing to `./src/*` without setting deprecated `baseUrl` in TypeScript.
+6. **Clean Git Hygiene**: Maintain clean working trees with descriptive commit messages following Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`).
