@@ -2,9 +2,11 @@ import { Routes, Route, Link } from "react-router";
 import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import PublicRoute from "./components/PublicRoute";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import UsersPage from "./pages/UsersPage";
 import { Ticket, Users, ArrowLeft } from "lucide-react";
 
 export default function App() {
@@ -41,27 +43,31 @@ export default function App() {
                 </div>
               }
             />
-            <Route
-              path="/admin/users"
-              element={
-                <div className="space-y-4">
-                  <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                        <Users className="w-6 h-6" />
+            {/* Admin-only routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/users" element={<UsersPage />} />
+              <Route
+                path="/admin/users"
+                element={
+                  <div className="space-y-4">
+                    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                          <Users className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-bold text-slate-900">Agent & Admin Management</h2>
+                          <p className="text-xs text-slate-500">Manage support agents, admins, and permissions</p>
+                        </div>
                       </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-slate-900">Agent & Admin Management</h2>
-                        <p className="text-xs text-slate-500">Manage support agents, admins, and permissions</p>
+                      <div className="mt-8 border-t border-slate-100 pt-6 text-sm text-slate-600">
+                        <p>Active administrators and support agents are synchronized with PostgreSQL and Better Auth.</p>
                       </div>
-                    </div>
-                    <div className="mt-8 border-t border-slate-100 pt-6 text-sm text-slate-600">
-                      <p>Active administrators and support agents are synchronized with PostgreSQL and Better Auth.</p>
                     </div>
                   </div>
-                </div>
-              }
-            />
+                }
+              />
+            </Route>
             <Route
               path="*"
               element={

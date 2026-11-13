@@ -80,10 +80,12 @@ export default function Navbar() {
           <Ticket className="w-4 h-4" />
           Tickets
         </Link>
-        <Link to="/admin/users" className="flex items-center gap-2 hover:text-indigo-600 transition-colors">
-          <Users className="w-4 h-4" />
-          Agents (Admin)
-        </Link>
+        {user?.role === "ADMIN" && (
+          <Link to="/users" className="flex items-center gap-2 hover:text-indigo-600 transition-colors">
+            <Users className="w-4 h-4" />
+            Users
+          </Link>
+        )}
       </nav>
 
       <div className="flex items-center gap-4">

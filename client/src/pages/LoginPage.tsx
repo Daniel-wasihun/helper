@@ -138,7 +138,7 @@ export default function LoginPage() {
                     type="email"
                     autoComplete="email"
                     placeholder="admin@example.com"
-                    className="pl-9"
+                    className="pl-10"
                     aria-invalid={!!errors.email}
                     {...register("email")}
                   />
@@ -160,20 +160,18 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className="pl-9 pr-9"
+                    className="pl-10 pr-10"
                     aria-invalid={!!errors.password}
                     {...register("password")}
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="icon-xs"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     title={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-xs text-destructive flex items-center gap-1 mt-1">
