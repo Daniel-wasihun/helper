@@ -30,5 +30,10 @@ export const auth = betterAuth({
       sameSite: "lax",
     },
   },
+  rateLimit: {
+    enabled: process.env.NODE_ENV === "production",
+    window: 10,
+    max: 100,
+  },
   trustedOrigins: [process.env.CLIENT_URL || "http://localhost:3000"],
 });

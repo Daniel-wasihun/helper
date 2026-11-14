@@ -1,0 +1,28 @@
+{
+  "name": "helper",
+  "version": "1.0.0",
+  "description": "Full-stack support ticket triage and response automation system built with **Bun**, **Express**, **React**, **TypeScript**, **Prisma ORM**, and **Google Gemini Pro**.",
+  "main": "index.js",
+  "scripts": {
+    "db:test:setup": "node scripts/setup-test-db.mjs",
+    "test:e2e": "node scripts/setup-test-db.mjs && playwright test",
+    "test:e2e:ui": "node scripts/setup-test-db.mjs && playwright test --ui",
+    "test:e2e:headed": "node scripts/setup-test-db.mjs && playwright test --headed"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Daniel-wasihun/helper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Daniel-wasihun/helper/issues"
+  },
+  "homepage": "https://github.com/Daniel-wasihun/helper#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^26.6.6"
+  }
+}

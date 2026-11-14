@@ -1,6 +1,6 @@
 # Antigravity Agent Guidelines & Project Memory: Helper AI
 
-This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memory and rulebook for the **Helper AI** ticket management system in Google Antigravity. These instructions must be actively referenced and strictly applied to every prompt, turn, and code change.
+This document (`AGENTS.md`) serves as the persistent project memory and rulebook for the **Helper AI** ticket management system in Google Antigravity. These instructions must be actively referenced and strictly applied to every prompt, turn, and code change.
 
 ---
 
@@ -32,9 +32,12 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
 
 ## 2. Strict Port & Networking Rules
 
-- **Frontend Port**: `3000` (Strictly configured in Vite).
-- **Backend Port**: `3001` (Default Express listen port on `0.0.0.0`; CORS origin allowed from `http://localhost:3000`).
-- **REST Proxy**: Frontend Vite server proxies `/api` requests explicitly to `http://127.0.0.1:3001` (avoids IPv6 `::1` resolution conflicts).
+- **Development Frontend Port**: `3000` (Strictly configured in Vite).
+- **Development Backend Port**: `3001` (Default Express listen port on `0.0.0.0`; CORS origin allowed from `http://localhost:3000`).
+- **REST Proxy**: Frontend Vite server proxies `/api` requests explicitly to `http://127.0.0.1:3001` (avoids IPv6 `::1` resolution conflicts) dynamically configured via `loadEnv`.
+- **E2E Testing Ports**:
+  - **Test Frontend Port**: `3002` (Vite dev server proxying `/api` to `http://127.0.0.1:3003`).
+  - **Test Backend Port**: `3003` (Express test instance bound to `helper_test_db`).
 - **FORBIDDEN PORTS**: **NEVER** bind or suggest ports `5173`, `5473`, `73`, `8000`, or `8080`, as they conflict with other running user services.
 
 ---
@@ -66,6 +69,7 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
     - **Route Shadowing Rule**: Any custom `/api/auth/*` routes (e.g. `app.get("/api/auth/me")`) must be registered **before** `toNodeHandler(auth)` to prevent Better Auth returning a 404.
     - Role-based authorization middlewares (`requireAuth`, `requireRole`) in `server/src/middleware/auth.ts`.
     - Administrative user provisioning (`POST /api/admin/users`) protected by `requireRole(UserRole.ADMIN)`, validated strictly with Zod (email format, password min 8 / max 128 chars to mitigate CPU exhaustion/Hash DoS), and sanitized error responses.
+    - **Production-Only Rate Limiting**: Rate limiting is strictly enforced **only in production** (`process.env.NODE_ENV === "production"`) across Better Auth (`rateLimit: { enabled: isProd, window: 10, max: 100 }`) and Express `/api` routes via `express-rate-limit` (300 requests / 15 min), preventing DoS while allowing rapid local development and unthrottled Playwright E2E test runs.
   - **Client Setup (`/client/src/lib/auth-client.ts`, `/client/src/context/AuthContext.tsx`)**:
     - `createAuthClient` from `better-auth/react`.
     - Global `AuthProvider` providing `user`, `isLoading`, `signIn`, `signOut`, and asynchronous `refetchSession()`.
@@ -87,6 +91,24 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
   - SendGrid or Mailgun inbound parse webhook (`POST /api/webhooks/email`) + transactional outbound delivery.
 - **Containerization**:
   - Multi-container Docker & Docker Compose (`postgres` with `pgvector`, backend API, and frontend).
+- **Testing & E2E Architecture (Playwright)**:
+  - **Framework**: `@playwright/test` orchestrated from the project root (`playwright.config.ts`).
+  - **Test Directory**: `./e2e` for all end-to-end user journeys and integration suites.
+  - **Isolated Database (`helper_test_db`)**:
+    - Tests run against dedicated PostgreSQL database `helper_test_db` (`localhost:5434` or configured host), leaving the development database `helper_db` untouched.
+    - Test environment defined in `server/.env.test`.
+    - Automated lifecycle script `scripts/setup-test-db.mjs` verifies/creates `helper_test_db`, deploys Prisma migrations via `prisma migrate deploy --config=./server/prisma.config.ts`, and seeds test accounts before test execution.
+  - **Dual WebServer Orchestration**:
+    - Playwright automatically starts the test backend on port `3003` and test frontend on port `3002`.
+    - Enables simultaneous local development on `:3000`/`:3001` without port conflicts (`EADDRINUSE`) or database pollution.
+  - **Global Lifecycle Hooks**:
+    - `globalSetup: "./e2e/setup/global-setup.ts"`: Automatically ensures `helper_test_db` exists, applies migrations, and seeds test fixtures before tests run.
+    - `globalTeardown: "./e2e/setup/global-teardown.ts"`: Handles post-test teardown and resource cleanup.
+  - **Commands**:
+    - `npm run db:test:setup`: Prepares and migrates `helper_test_db`.
+    - `npm run test:e2e`: Prepares test database and runs headless Playwright tests.
+    - `npm run test:e2e:ui`: Launches interactive Playwright UI runner.
+    - `npm run test:e2e:headed`: Runs tests with visible browser.
 
 ---
 

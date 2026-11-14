@@ -41,7 +41,7 @@ Ensure your `DATABASE_URL` points to the PostgreSQL `Helper` database:
 PORT=3001
 NODE_ENV=development
 CLIENT_URL=http://localhost:3000
-DATABASE_URL="postgresql://postgres:postgrespassword@localhost:5432/Helper?schema=public"
+DATABASE_URL="postgresql://postgres:2002@localhost:5434/helper_db?schema=public"
 ```
 
 ### 3. Database Synchronization

@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
+import { rateLimit } from "express-rate-limit";
 import { z } from "zod";
 import { toNodeHandler } from "better-auth/node";
 import { hashPassword } from "better-auth/crypto";
@@ -22,6 +23,22 @@ if (process.env.NODE_ENV === "production") {
 
 // CORS
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000", credentials: true }));
+
+// Rate limiting (strictly enabled only in production environment)
+if (process.env.NODE_ENV === "production") {
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes window
+    limit: 300, // Limit each IP to 300 requests per 15 minutes
+    standardHeaders: true, // Return standard RateLimit headers
+    legacyHeaders: false, // Disable X-RateLimit-* headers
+    message: {
+      error: "Too Many Requests",
+      message: "Too many requests from this IP, please try again later.",
+    },
+  });
+
+  app.use("/api", apiLimiter);
+}
 
 // Protected "me" endpoint alias (mounted before wildcard to prevent Better Auth route shadowing)
 app.get("/api/auth/me", requireAuth, (req: Request, res: Response) => {
