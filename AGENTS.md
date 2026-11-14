@@ -35,9 +35,6 @@ This document (`AGENTS.md`) serves as the persistent project memory and rulebook
 - **Development Frontend Port**: `3000` (Strictly configured in Vite).
 - **Development Backend Port**: `3001` (Default Express listen port on `0.0.0.0`; CORS origin allowed from `http://localhost:3000`).
 - **REST Proxy**: Frontend Vite server proxies `/api` requests explicitly to `http://127.0.0.1:3001` (avoids IPv6 `::1` resolution conflicts) dynamically configured via `loadEnv`.
-- **E2E Testing Ports**:
-  - **Test Frontend Port**: `3002` (Vite dev server proxying `/api` to `http://127.0.0.1:3003`).
-  - **Test Backend Port**: `3003` (Express test instance bound to `helper_test_db`).
 - **FORBIDDEN PORTS**: **NEVER** bind or suggest ports `5173`, `5473`, `73`, `8000`, or `8080`, as they conflict with other running user services.
 
 ---
@@ -91,24 +88,19 @@ This document (`AGENTS.md`) serves as the persistent project memory and rulebook
   - SendGrid or Mailgun inbound parse webhook (`POST /api/webhooks/email`) + transactional outbound delivery.
 - **Containerization**:
   - Multi-container Docker & Docker Compose (`postgres` with `pgvector`, backend API, and frontend).
-- **Testing & E2E Architecture (Playwright)**:
-  - **Framework**: `@playwright/test` orchestrated from the project root (`playwright.config.ts`).
-  - **Test Directory**: `./e2e` for all end-to-end user journeys and integration suites.
-  - **Isolated Database (`helper_test_db`)**:
-    - Tests run against dedicated PostgreSQL database `helper_test_db` (`localhost:5434` or configured host), leaving the development database `helper_db` untouched.
-    - Test environment defined in `server/.env.test`.
-    - Automated lifecycle script `scripts/setup-test-db.mjs` verifies/creates `helper_test_db`, deploys Prisma migrations via `prisma migrate deploy --config=./server/prisma.config.ts`, and seeds test accounts before test execution.
-  - **Dual WebServer Orchestration**:
-    - Playwright automatically starts the test backend on port `3003` and test frontend on port `3002`.
-    - Enables simultaneous local development on `:3000`/`:3001` without port conflicts (`EADDRINUSE`) or database pollution.
-  - **Global Lifecycle Hooks**:
-    - `globalSetup: "./e2e/setup/global-setup.ts"`: Automatically ensures `helper_test_db` exists, applies migrations, and seeds test fixtures before tests run.
-    - `globalTeardown: "./e2e/setup/global-teardown.ts"`: Handles post-test teardown and resource cleanup.
-  - **Commands**:
-    - `npm run db:test:setup`: Prepares and migrates `helper_test_db`.
-    - `npm run test:e2e`: Prepares test database and runs headless Playwright tests.
-    - `npm run test:e2e:ui`: Launches interactive Playwright UI runner.
-    - `npm run test:e2e:headed`: Runs tests with visible browser.
+- **Testing & Quality Assurance (Mandatory `e2e-engineer` Delegation)**:
+  - **Strict Ownership**: All end-to-end testing, Playwright test authoring, test execution, debugging, fixture creation, and test maintenance are strictly owned by and delegated to the `e2e-engineer` subagent (defined in `.agents/agents/e2e-test-writer/agent.md`).
+  - **No Direct Authoring**: The main agent must **NEVER** write, modify, or run files under `./e2e/` directly. Always invoke `e2e-engineer` using `invoke_subagent`.
+  - **How to Invoke `e2e-engineer`**:
+    - **`TypeName`**: `"e2e-engineer"`
+    - **`Role`**: `"E2E Test Engineer"`
+    - **Prompt Requirements**: Provide clear, actionable instructions specifying:
+      1. Target feature or user journey (e.g. login, ticket creation, triage, role-based access).
+      2. Roles and accounts to test (e.g. `ADMIN`, `AGENT`, unauthenticated guest).
+      3. Expected behavior and assertions (UI states, API responses, DB modifications).
+      4. Any relevant paths or components to inspect.
+  - **Subagent Workflow**:
+    - The `e2e-engineer` will inspect the implementation, formulate a test plan, verify the isolated test environment (`helper_test_db`, ports `:3002`/`:3003`), write deterministic tests following Playwright best practices, execute them via `npm run test:e2e`, and return evidence-backed results.
 
 ---
 
