@@ -22,5 +22,13 @@ export const auth = betterAuth({
       },
     },
   },
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === "production",
+    defaultCookieAttributes: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    },
+  },
   trustedOrigins: [process.env.CLIENT_URL || "http://localhost:3000"],
 });

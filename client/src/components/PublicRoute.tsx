@@ -22,7 +22,11 @@ export default function PublicRoute() {
 
   if (user) {
     const state = location.state as LocationState | null;
-    const redirectUrl = state?.from?.pathname || "/";
+    const rawRedirect = state?.from?.pathname || "/";
+    const redirectUrl =
+      rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") && !rawRedirect.startsWith("/\\")
+        ? rawRedirect
+        : "/";
     return <Navigate to={redirectUrl} replace />;
   }
 

@@ -73,10 +73,15 @@ export default function LoginPage() {
         return;
       }
 
-      // Refresh session state and navigate
-      refetchSession();
+      // Refresh session state and await resolution to prevent redirect race conditions
+      await refetchSession();
       const state = location.state as LocationState | null;
-      const destination = state?.from?.pathname || "/";
+      const rawDestination = state?.from?.pathname || "/";
+      // Validate redirect destination is a safe relative path
+      const destination =
+        rawDestination.startsWith("/") && !rawDestination.startsWith("//") && !rawDestination.startsWith("/\\")
+          ? rawDestination
+          : "/";
       navigate(destination, { replace: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to sign in. Please check your connection.";
@@ -199,28 +204,30 @@ export default function LoginPage() {
             </form>
           </CardContent>
 
-          <CardFooter className="pt-2 pb-6 border-t border-border flex flex-col gap-3">
-            <div className="w-full bg-muted/60 rounded-lg p-3 border border-border/80">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                  <KeyRound className="h-3.5 w-3.5 text-primary" />
-                  Default Admin Credentials
-                </span>
-                <Button
-                  type="button"
-                  variant="link"
-                  size="xs"
-                  onClick={handleFillDemoAdmin}
-                  className="h-auto p-0 text-xs font-semibold"
-                >
-                  Fill credentials
-                </Button>
+          {import.meta.env.DEV && (
+            <CardFooter className="pt-2 pb-6 border-t border-border flex flex-col gap-3">
+              <div className="w-full bg-muted/60 rounded-lg p-3 border border-border/80">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                    <KeyRound className="h-3.5 w-3.5 text-primary" />
+                    Development Credentials
+                  </span>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="xs"
+                    onClick={handleFillDemoAdmin}
+                    className="h-auto p-0 text-xs font-semibold"
+                  >
+                    Fill credentials
+                  </Button>
+                </div>
+                <p className="text-[11px] font-mono text-muted-foreground mt-1">
+                  admin@example.com / password123
+                </p>
               </div>
-              <p className="text-[11px] font-mono text-muted-foreground mt-1">
-                admin@example.com / password123
-              </p>
-            </div>
-          </CardFooter>
+            </CardFooter>
+          )}
         </Card>
       </div>
     </div>

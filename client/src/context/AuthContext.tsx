@@ -15,7 +15,7 @@ interface AuthContextType {
   isLoading: boolean;
   signIn: typeof authClient.signIn.email;
   signOut: () => Promise<void>;
-  refetchSession: () => void;
+  refetchSession: () => Promise<unknown>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,7 +25,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = async () => {
     await authClient.signOut();
-    refetch();
+    await refetch();
+  };
+
+  const handleRefetchSession = async () => {
+    return await refetch();
   };
 
   return (
@@ -35,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: isPending,
         signIn: authClient.signIn.email,
         signOut: handleSignOut,
-        refetchSession: refetch,
+        refetchSession: handleRefetchSession,
       }}
     >
       {children}
