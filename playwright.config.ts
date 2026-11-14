@@ -2,13 +2,14 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  outputDir: "./e2e/test-results",
   globalSetup: "./e2e/setup/global-setup.ts",
   globalTeardown: "./e2e/setup/global-teardown.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [["list"], ["html", { open: "never" }]],
+  reporter: [["list"], ["html", { open: "never", outputFolder: "e2e/playwright-report" }]],
   use: {
     baseURL: "http://localhost:3002",
     trace: "on-first-retry",

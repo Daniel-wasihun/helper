@@ -4,29 +4,22 @@ import { hashPassword } from "better-auth/crypto";
 import prisma from "../src/lib/prisma.ts";
 import { UserRole } from "../src/types/auth.ts";
 
-async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
-  const adminPassword = process.env.ADMIN_PASSWORD || "password123";
-  const adminName = process.env.ADMIN_NAME || "System Admin";
-
-  console.log("=== SEEDING DATABASE ===");
-  console.log(`Admin email: ${adminEmail}`);
-
-  const hashedPassword = await hashPassword(adminPassword);
+async function seedUser(email: string, password: string, name: string, role: UserRole) {
+  const hashedPassword = await hashPassword(password);
 
   const existingUser = await prisma.user.findUnique({
-    where: { email: adminEmail },
+    where: { email },
     include: { accounts: true },
   });
 
   if (existingUser) {
-    console.log(`User ${adminEmail} already exists. Updating role to ${UserRole.ADMIN} and refreshing password...`);
+    console.log(`User ${email} already exists. Updating role to ${role} and refreshing password...`);
 
     await prisma.user.update({
       where: { id: existingUser.id },
       data: {
-        role: UserRole.ADMIN,
-        name: adminName,
+        role,
+        name,
         emailVerified: true,
       },
     });
@@ -57,7 +50,7 @@ async function main() {
       });
     }
 
-    console.log(`✓ Admin user ${adminEmail} updated successfully.`);
+    console.log(`✓ User ${email} updated successfully with role ${role}.`);
     return;
   }
 
@@ -67,9 +60,9 @@ async function main() {
   await prisma.user.create({
     data: {
       id: userId,
-      email: adminEmail,
-      name: adminName,
-      role: UserRole.ADMIN,
+      email,
+      name,
+      role,
       emailVerified: true,
       createdAt: now,
       updatedAt: now,
@@ -86,7 +79,21 @@ async function main() {
     },
   });
 
-  console.log(`✓ Admin user ${adminEmail} created successfully with role ${UserRole.ADMIN}!`);
+  console.log(`✓ User ${email} created successfully with role ${role}!`);
+}
+
+async function main() {
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "password123";
+  const adminName = process.env.ADMIN_NAME || "System Admin";
+
+  const agentEmail = process.env.AGENT_EMAIL || "agent@example.com";
+  const agentPassword = process.env.AGENT_PASSWORD || "password123";
+  const agentName = process.env.AGENT_NAME || "Support Agent";
+
+  console.log("=== SEEDING DATABASE ===");
+  await seedUser(adminEmail, adminPassword, adminName, UserRole.ADMIN);
+  await seedUser(agentEmail, agentPassword, agentName, UserRole.AGENT);
 }
 
 main()
