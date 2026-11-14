@@ -56,15 +56,22 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
   - **ESM & Env Hygiene**: `server/src/lib/prisma.ts` explicitly imports `dotenv/config` at the top of the file to prevent `DATABASE_URL` being undefined during ESM module graph resolution.
 - **Authentication & Authorization Architecture**:
   - **Framework**: [Better Auth](https://better-auth.com) (`better-auth` v1.x) with TypeScript.
-  - **Server Setup (`/server/src/auth.ts`)**:
+  - **Server Setup (`/server/src/auth.ts`, `/server/src/index.ts`)**:
     - `prismaAdapter(prisma, { provider: "postgresql" })`.
     - Email/password authentication (`emailAndPassword: { enabled: true, disableSignUp: true }`) to restrict self-registration; users/agents are provisioned administratively.
-    - User schema extended with `role` field (`ADMIN` | `AGENT`), defaulting to `AGENT`.
-    - Handled in Express via `toNodeHandler(auth)` mounted at `/api/auth/*` **before** `express.json()` to avoid consuming request streams.
+    - User schema extended with `role` field (`ADMIN` | `AGENT`), defaulting to `AGENT` with `input: false` to prevent self-role-assignment.
+    - Reverse proxy trust configured via `app.set("trust proxy", 1)` in production.
+    - Cookie security enforced with `advanced.useSecureCookies: true`, `httpOnly: true`, and `sameSite: "lax"`.
+    - Handled in Express via `toNodeHandler(auth)` mounted at `/api/auth/*` **before** `express.json()`.
+    - **Route Shadowing Rule**: Any custom `/api/auth/*` routes (e.g. `app.get("/api/auth/me")`) must be registered **before** `toNodeHandler(auth)` to prevent Better Auth returning a 404.
     - Role-based authorization middlewares (`requireAuth`, `requireRole`) in `server/src/middleware/auth.ts`.
+    - Administrative user provisioning (`POST /api/admin/users`) protected by `requireRole(UserRole.ADMIN)`, validated strictly with Zod (email format, password min 8 / max 128 chars to mitigate CPU exhaustion/Hash DoS), and sanitized error responses.
   - **Client Setup (`/client/src/lib/auth-client.ts`, `/client/src/context/AuthContext.tsx`)**:
     - `createAuthClient` from `better-auth/react`.
-    - Global `AuthProvider` providing `user`, `isLoading`, `signIn`, `signOut`, and `refetchSession`.
+    - Global `AuthProvider` providing `user`, `isLoading`, `signIn`, `signOut`, and asynchronous `refetchSession()`.
+    - **Race Condition Prevention**: `await refetchSession()` must be awaited before navigating on login to prevent route guard redirect bounce.
+    - **Redirect Sanitization**: Post-login navigation targets (`from?.pathname`) must enforce single-leading-slash validation (`path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\")`) to prevent open redirect vulnerabilities.
+    - **Environment Hygiene**: Demo/development credentials in UI cards must be strictly guarded behind `{import.meta.env.DEV && ( ... )}` so Vite tree-shakes them in production bundles.
     - Route guards:
       - `ProtectedRoute`: Enforces authenticated session before displaying private pages; redirects guests to `/login`.
       - `AdminRoute`: Enforces `user.role === "ADMIN"`; redirects unauthorized agents to `/`.
