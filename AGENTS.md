@@ -33,8 +33,8 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
 ## 2. Strict Port & Networking Rules
 
 - **Frontend Port**: `3000` (Strictly configured in Vite).
-- **Backend Port**: `3001` (Default Express listen port; CORS origin allowed from `http://localhost:3000`).
-- **REST Proxy**: Frontend Vite server proxies `/api` requests to `http://localhost:3001`.
+- **Backend Port**: `3001` (Default Express listen port on `0.0.0.0`; CORS origin allowed from `http://localhost:3000`).
+- **REST Proxy**: Frontend Vite server proxies `/api` requests explicitly to `http://127.0.0.1:3001` (avoids IPv6 `::1` resolution conflicts).
 - **FORBIDDEN PORTS**: **NEVER** bind or suggest ports `5173`, `5473`, `73`, `8000`, or `8080`, as they conflict with other running user services.
 
 ---
@@ -53,6 +53,7 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
   - Node.js (v24 LTS) / Bun runtime with Express 4 and TypeScript.
   - Prisma ORM managing PostgreSQL with `pgvector` extension.
   - Authentication via **Better Auth** with `@prisma/client` PostgreSQL adapter.
+  - **ESM & Env Hygiene**: `server/src/lib/prisma.ts` explicitly imports `dotenv/config` at the top of the file to prevent `DATABASE_URL` being undefined during ESM module graph resolution.
 - **Authentication & Authorization Architecture**:
   - **Framework**: [Better Auth](https://better-auth.com) (`better-auth` v1.x) with TypeScript.
   - **Server Setup (`/server/src/auth.ts`)**:
@@ -64,7 +65,14 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
   - **Client Setup (`/client/src/lib/auth-client.ts`, `/client/src/context/AuthContext.tsx`)**:
     - `createAuthClient` from `better-auth/react`.
     - Global `AuthProvider` providing `user`, `isLoading`, `signIn`, `signOut`, and `refetchSession`.
-    - Protected routes enforce authenticated sessions before displaying dashboards.
+    - Route guards:
+      - `ProtectedRoute`: Enforces authenticated session before displaying private pages; redirects guests to `/login`.
+      - `AdminRoute`: Enforces `user.role === "ADMIN"`; redirects unauthorized agents to `/`.
+    - Admin-only routes (such as `/users`) are protected by `AdminRoute`.
+    - Navigation header conditionally renders admin links only when `user.role === "ADMIN"`.
+- **Known Seeded / Provisioned Accounts**:
+  - **Admin**: `admin@example.com` / `password123` (Role: `ADMIN`)
+  - **Agent**: `agent@example.com` / `password123` (Role: `AGENT`)
 - **AI & RAG Engine**:
   - Google Gemini Pro (`@google/genai`) for ticket classification, conversation summarization, and suggested replies.
   - Google `text-embedding-004` for vectorizing knowledge base articles.
@@ -86,5 +94,6 @@ This document (`AGENTS.md` / `GEMINI.md`) serves as the persistent project memor
 5. **UI & Component Guidelines**:
    - Use shadcn/ui components (`@/components/ui/*`) for interface primitives (Card, Button, Input, Label, Alert, etc.).
    - Standardize utility functions in `@/lib/utils.ts` with the `cn(...)` helper.
+   - Form inputs (`@/components/ui/input.tsx`) must be wrapped with `React.forwardRef` to ensure proper integration with `react-hook-form`'s `register()` refs. Standard input height is `h-10`.
    - Maintain alias `@/*` pointing to `./src/*` without setting deprecated `baseUrl` in TypeScript.
 6. **Clean Git Hygiene**: Maintain clean working trees with descriptive commit messages following Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`).
